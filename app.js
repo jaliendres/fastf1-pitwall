@@ -40,16 +40,40 @@ async function loadManifest() {
     const response = await fetch("data/manifest.json", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     state.manifest = await response.json();
-    const select = $("sessionSelect");
-    select.innerHTML = state.manifest.sessions.map((session) =>
-      `<option value="${escapeHTML(session.file)}">${session.year} · ${escapeHTML(session.event)} · ${escapeHTML(session.sessionName)}</option>`
-    ).join("");
+    populateYears();
     $("dataStamp").textContent = `DATOS · ${new Date(state.manifest.generatedAt).toLocaleDateString("es")}`;
-    await loadSession(select.value);
+    await loadSession($("sessionSelect").value);
   } catch (error) {
     setLoading("No fue posible cargar los datos. Inicia un servidor local o revisa el despliegue de GitHub Pages.", true);
     console.error(error);
   }
+}
+
+function populateYears() {
+  const years = [...new Set(state.manifest.sessions.map((session) => Number(session.year)))].sort((a, b) => b - a);
+  $("yearSelect").innerHTML = years.map((year) => `<option value="${year}">${year}</option>`).join("");
+  populateEvents();
+}
+
+function sessionsForYear() {
+  return state.manifest.sessions.filter((session) => String(session.year) === $("yearSelect").value);
+}
+
+function populateEvents() {
+  const sessions = sessionsForYear();
+  const events = [...new Map(sessions.map((session) => [session.event, session])).values()]
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  $("eventSelect").innerHTML = events.map((session) =>
+    `<option value="${escapeHTML(session.event)}">${escapeHTML(session.event)}</option>`
+  ).join("");
+  populateSessions();
+}
+
+function populateSessions() {
+  const sessions = sessionsForYear().filter((session) => session.event === $("eventSelect").value);
+  $("sessionSelect").innerHTML = sessions.map((session) =>
+    `<option value="${escapeHTML(session.file)}">${escapeHTML(session.sessionName)}</option>`
+  ).join("");
 }
 
 async function loadSession(file) {
@@ -365,6 +389,14 @@ function exportCSV() {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
+$("yearSelect").addEventListener("change", () => {
+  populateEvents();
+  loadSession($("sessionSelect").value);
+});
+$("eventSelect").addEventListener("change", () => {
+  populateSessions();
+  loadSession($("sessionSelect").value);
+});
 $("sessionSelect").addEventListener("change", (event) => loadSession(event.target.value));
 $("driverASelect").addEventListener("change", (event) => {
   state.driverA = event.target.value;

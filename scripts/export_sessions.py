@@ -141,7 +141,7 @@ def export_driver(session: fastf1.core.Session, abbreviation: str, result: pd.Se
     }
 
 
-def export_session(year: int, event: str, session_code: str) -> tuple[str, dict[str, Any]]:
+def export_session(year: int, event: str | int, session_code: str) -> tuple[str, dict[str, Any]]:
     print(f"Loading {year} {event} {session_code}...")
     session = fastf1.get_session(year, event, session_code)
     session.load(telemetry=True, weather=True, messages=True)
@@ -224,6 +224,24 @@ def parse_spec(values: list[list[str]]) -> list[tuple[int, str, str]]:
     return specs
 
 
+def write_export(manifest: dict[str, Any], slug: str, payload: dict[str, Any]) -> None:
+    target = DATA_DIR / f"{slug}.json"
+    target.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    manifest["sessions"] = [item for item in manifest["sessions"] if item.get("id") != slug]
+    manifest["sessions"].append({
+        "id": slug,
+        "file": f"data/{target.name}",
+        **payload["meta"],
+    })
+    manifest["sessions"].sort(key=lambda item: (
+        int(item.get("year", 0)), str(item.get("date") or ""), str(item.get("sessionName") or "")
+    ), reverse=True)
+    (DATA_DIR / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(f"Wrote {target.relative_to(ROOT)} ({target.stat().st_size / 1024:.0f} KiB)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -243,8 +261,8 @@ def main() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     if args.frozen_cache:
-        import fastf1.testing
-        fastf1.testing.enable_frozen_http_cache(
+        from fastf1 import testing as fastf1_testing
+        fastf1_testing.enable_frozen_http_cache(
             str(Path(args.frozen_cache).resolve()), str(CACHE_DIR), record=False
         )
     else:
@@ -258,19 +276,7 @@ def main() -> None:
         manifest = {"generatedAt": datetime.now(timezone.utc).isoformat(), "sessions": []}
     for year, event, session_code in parse_spec(args.session):
         slug, payload = export_session(year, event, session_code)
-        target = DATA_DIR / f"{slug}.json"
-        target.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-        manifest["sessions"] = [item for item in manifest["sessions"] if item.get("id") != slug]
-        manifest["sessions"].append({
-            "id": slug,
-            "file": f"data/{target.name}",
-            **payload["meta"],
-        })
-        print(f"Wrote {target.relative_to(ROOT)} ({target.stat().st_size / 1024:.0f} KiB)")
-
-    manifest_path.write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+        write_export(manifest, slug, payload)
 
 
 if __name__ == "__main__":

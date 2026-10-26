@@ -55,6 +55,12 @@ los visitantes del sitio nunca necesitan una cuenta de F1 ni de GPT.
 También se incluye un workflow manual, **Update FastF1 data**, que permite
 regenerar los datos indicando año, evento y sesión desde la pestaña Actions.
 
+Para completar el archivo histórico, el workflow **Backfill FastF1 season**
+exporta todas las sesiones terminadas de una temporada (FP1, FP2, FP3,
+clasificación, sprint y carrera). Ejecútalo una vez por temporada desde 2018.
+El sitio organiza automáticamente el manifiesto resultante por temporada,
+Gran Premio y sesión, y descarga cada JSON solamente cuando se selecciona.
+
 ## Aviso
 
 Este es un proyecto no oficial y no está asociado con Formula 1, Formula One
