@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-10-26T03:00:07.172341+00:00",
+  "sessions": [
+    {
+      "id": "2021-spanish-grand-prix-q",
+      "file": "data/2021-spanish-grand-prix-q.json",
+      "year": 2021,
+      "event": "Spanish Grand Prix",
+      "officialEventName": "FORMULA 1 ARAMCO GRAN PREMIO DE ESPAÑA 2021",
+      "country": "Spain",
+      "location": "Barcelona",
+      "session": "Q",
+      "sessionName": "Qualifying",
+      "date": "2021-05-08T13:00:00",
+      "generatedAt": "2026-10-26T03:00:11.196473+00:00",
+      "source": "FastF1 official docs snapshot"
+    },
+    {
+      "id": "2023-azerbaijan-grand-prix-r",
+      "file": "data/2023-azerbaijan-grand-prix-r.json",
+      "year": 2023,
+      "event": "Azerbaijan Grand Prix",
+      "officialEventName": "FORMULA 1 AZERBAIJAN GRAND PRIX 2023",
+      "country": "Azerbaijan",
+      "location": "Baku",
+      "session": "R",
+      "sessionName": "Race",
+      "date": "2023-04-30T11:00:00",
+      "generatedAt": "2026-10-26T03:00:15.422766+00:00",
+      "source": "FastF1 official docs snapshot"
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Compara vueltas rápidas, telemetría, ritmo y estrategia de Fórmula 1 con datos procesados por FastF1.">
+  <meta name="theme-color" content="#071014">
+  <title>FastF1 Pitwall · Telemetry Lab</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+  <a class="skip-link" href="#analysis">Saltar al análisis</a>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="site-header shell">
+    <a class="brand" href="#top" aria-label="FastF1 Pitwall, inicio">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>FASTF1</strong><small>PITWALL / TELEMETRY LAB</small></span>
+    </a>
+    <div class="header-meta">
+      <span class="live-dot" aria-hidden="true"></span>
+      <span id="dataStamp">Cargando dataset…</span>
+      <a href="#methodology">Metodología</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <p class="eyebrow">RACE ENGINEERING, MADE LEGIBLE</p>
+        <h1>Dos pilotos.<br><em>Una vuelta explicada.</em></h1>
+        <p class="lede">Convierte telemetría compleja en una comparación clara de ritmo, técnica y ejecución. Sin cuentas, sin claves y sin cajas negras.</p>
+      </div>
+      <div class="hero-stat" aria-label="Descripción del producto">
+        <span>DATA PIPELINE</span>
+        <strong>PY → JSON → WEB</strong>
+        <small>Procesado con FastF1 · servido como sitio estático</small>
+      </div>
+    </section>
+
+    <section class="control-dock shell" aria-label="Controles de comparación">
+      <label>
+        <span>SESIÓN</span>
+        <select id="sessionSelect" aria-label="Seleccionar sesión"></select>
+      </label>
+      <label>
+        <span>PILOTO A</span>
+        <select id="driverASelect" aria-label="Seleccionar primer piloto"></select>
+      </label>
+      <div class="versus" aria-hidden="true">VS</div>
+      <label>
+        <span>PILOTO B</span>
+        <select id="driverBSelect" aria-label="Seleccionar segundo piloto"></select>
+      </label>
+      <button class="export-button" id="exportBtn" type="button">
+        <span>EXPORTAR</span>
+        <strong>CSV ↓</strong>
+      </button>
+    </section>
+
+    <div id="loadingState" class="loading shell" role="status">
+      <span></span><span></span><span></span>
+      Procesando telemetría…
+    </div>
+
+    <section id="analysis" class="analysis shell" hidden>
+      <div class="session-ribbon">
+        <div>
+          <span id="sessionCode">—</span>
+          <strong id="sessionTitle">—</strong>
+        </div>
+        <p id="sessionSubtitle">—</p>
+      </div>
+
+      <section class="comparison-banner" aria-label="Resumen de pilotos">
+        <article class="driver-card driver-a" id="driverACard"></article>
+        <div class="comparison-center">
+          <span>DELTA VUELTA RÁPIDA</span>
+          <strong id="headlineDelta">—</strong>
+          <small id="headlineWinner">—</small>
+        </div>
+        <article class="driver-card driver-b" id="driverBCard"></article>
+      </section>
+
+      <section class="kpi-grid" aria-label="Indicadores clave">
+        <article><span>MEJOR VUELTA</span><strong id="kpiBest">—</strong><small id="kpiBestNote">—</small></article>
+        <article><span>VELOCIDAD PUNTA</span><strong id="kpiSpeed">—</strong><small id="kpiSpeedNote">—</small></article>
+        <article><span>RITMO MEDIANO</span><strong id="kpiMedian">—</strong><small id="kpiMedianNote">—</small></article>
+        <article><span>VUELTAS ANALIZADAS</span><strong id="kpiLaps">—</strong><small>Registros cronometrados</small></article>
+      </section>
+
+      <div class="dashboard-grid">
+        <article class="panel telemetry-panel span-8">
+          <div class="panel-heading">
+            <div><span>01 / TELEMETRÍA</span><h2>Velocidad y control</h2></div>
+            <div class="legend" id="telemetryLegend"></div>
+          </div>
+          <div class="chart-stack">
+            <div class="chart-block"><div class="chart-label"><span>VELOCIDAD</span><b>KM/H</b></div><svg id="speedChart" role="img" aria-label="Comparación de velocidad por distancia"></svg></div>
+            <div class="chart-block compact"><div class="chart-label"><span>ACELERADOR</span><b>%</b></div><svg id="throttleChart" role="img" aria-label="Comparación de acelerador por distancia"></svg></div>
+            <div class="chart-block compact"><div class="chart-label"><span>FRENO</span><b>ON/OFF</b></div><svg id="brakeChart" role="img" aria-label="Comparación de frenado por distancia"></svg></div>
+            <div class="chart-block delta"><div class="chart-label"><span>DELTA</span><b>SEG.</b></div><svg id="deltaChart" role="img" aria-label="Delta de tiempo aproximado"></svg></div>
+          </div>
+        </article>
+
+        <article class="panel track-panel span-4">
+          <div class="panel-heading"><div><span>02 / CIRCUITO</span><h2>Mapa de velocidad</h2></div></div>
+          <div class="track-wrap"><svg id="trackMap" role="img" aria-label="Mapa del circuito coloreado por velocidad"></svg></div>
+          <div class="speed-scale"><span>LENTO</span><i></i><span>RÁPIDO</span></div>
+          <p id="trackInsight" class="panel-note">—</p>
+        </article>
+
+        <article class="panel span-7">
+          <div class="panel-heading">
+            <div><span>03 / CONSISTENCIA</span><h2>Ritmo vuelta a vuelta</h2></div>
+            <button class="mini-toggle is-active" type="button" id="cleanLapsToggle">VUELTAS REPRESENTATIVAS</button>
+          </div>
+          <svg id="paceChart" class="large-chart" role="img" aria-label="Comparación del ritmo por vuelta"></svg>
+          <p class="panel-note">Se excluyen automáticamente vueltas sin tiempo. El filtro representativo limita valores atípicos por encima del 108% de la mediana.</p>
+        </article>
+
+        <article class="panel span-5">
+          <div class="panel-heading"><div><span>04 / ESTRATEGIA</span><h2>Secuencia de neumáticos</h2></div></div>
+          <div id="strategyChart" class="strategy-chart"></div>
+          <div class="compound-key"><span><i class="soft"></i>SOFT</span><span><i class="medium"></i>MEDIUM</span><span><i class="hard"></i>HARD</span><span><i class="inter"></i>INTER</span></div>
+        </article>
+
+        <article class="panel span-8">
+          <div class="panel-heading"><div><span>05 / CLASIFICACIÓN</span><h2>Resultado de la sesión</h2></div><small>Selecciona una fila para cambiar el piloto A</small></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>POS.</th><th>PILOTO</th><th>EQUIPO</th><th>MEJOR VUELTA</th><th>ESTADO</th><th>PTS.</th></tr></thead>
+              <tbody id="rankingBody"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel weather-panel span-4">
+          <div class="panel-heading"><div><span>06 / ENTORNO</span><h2>Condiciones</h2></div></div>
+          <div class="weather-main"><span>PISTA</span><strong id="trackTemp">—</strong><small id="trackTempRange">—</small></div>
+          <div class="weather-grid">
+            <div><span>AIRE</span><strong id="airTemp">—</strong></div>
+            <div><span>HUMEDAD</span><strong id="humidity">—</strong></div>
+            <div><span>VIENTO</span><strong id="wind">—</strong></div>
+            <div><span>LLUVIA</span><strong id="rain">—</strong></div>
+          </div>
+        </article>
+      </div>
+
+      <section id="methodology" class="methodology">
+        <div><span>METODOLOGÍA ABIERTA</span><h2>Del cronometraje al navegador.</h2></div>
+        <ol>
+          <li><b>01</b><strong>Extraer</strong><p>FastF1 carga resultados, vueltas, telemetría, neumáticos y clima.</p></li>
+          <li><b>02</b><strong>Reducir</strong><p>Python limpia valores ausentes y muestrea canales sin alterar la forma de la vuelta.</p></li>
+          <li><b>03</b><strong>Publicar</strong><p>GitHub Pages sirve JSON y HTML estático; el visitante no entrega credenciales.</p></li>
+          <li><b>04</b><strong>Verificar</strong><p>La fecha y versión de la fuente permanecen visibles para mantener trazabilidad.</p></li>
+        </ol>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer shell">
+    <div><strong>FASTF1 PITWALL</strong><span>Proyecto independiente de análisis</span></div>
+    <p>Datos procesados con FastF1. Proyecto no oficial, sin relación con Formula One Group ni la FIA.</p>
+    <a href="https://github.com/theOehrly/Fast-F1" rel="noreferrer">FUENTE ↗</a>
+  </footer>
+
+  <noscript>Este dashboard requiere JavaScript para representar los datos.</noscript>
+  <script src="app.js?v=2" defer></script>
+</body>
+</html>
+
